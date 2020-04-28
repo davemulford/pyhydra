@@ -520,4 +520,3 @@ class hydra_api:
             parameters=query_params,
             headers={"Content-Type": "application/json"},
         )
->>>>>>> handling incoming data better, checking for lists or not
