@@ -532,10 +532,8 @@ class hydra_api:
         )
 =======
                     query_params.update({"q": "{0}:({1})".format(k, " OR ".join(v))})
-                    print(query_params)
                 else:
                     query_params.update({"q": "{0}:({1})".format(k, v)})
-                    print(query_params)
 
         return self.__get_api('search/cases/', parameters=query_params,
                 headers={'Content-Type': 'application/json'})
