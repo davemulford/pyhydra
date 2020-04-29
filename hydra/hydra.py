@@ -497,20 +497,15 @@ class hydra_api:
         for k, v in kwargs.items():
             ## Fields add a much needed filter as the query will return a LOT of information without some!
             if k.lower() == "fl":
-<<<<<<< HEAD
-                query_params.update({"fl": ",".join(v)})
-=======
                 # Modifying the way the value is handed to the dictionary if handed a list or not
                 if isinstance(v, list):
                     query_params.update({'fl': ",".join(v)})
                 else:
                     query_params.update({'fl': v})
->>>>>>> handling incoming data better, checking for lists or not
             # Everything else is a Query so it goes under q
             else:
                 # Modifying the way the value is handed to the dictionary if handed a list or not
                 if isinstance(v, list):
-<<<<<<< HEAD
                     if "q" in query_params.keys():
                         query_params.update(
                             {"fq": "{0}:({1})".format(k, " OR ".join(v))}
@@ -530,11 +525,3 @@ class hydra_api:
             parameters=query_params,
             headers={"Content-Type": "application/json"},
         )
-=======
-                    query_params.update({"q": "{0}:({1})".format(k, " OR ".join(v))})
-                else:
-                    query_params.update({"q": "{0}:({1})".format(k, v)})
-
-        return self.__get_api('search/cases/', parameters=query_params,
-                headers={'Content-Type': 'application/json'})
->>>>>>> handling incoming data better, checking for lists or not
