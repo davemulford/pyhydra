@@ -80,6 +80,7 @@ class hydra_api:
                     )
                 )
         except Exception:
+
             raise Exception(
                 """looking up information from: {}\n
                 Error during request call""".format(
