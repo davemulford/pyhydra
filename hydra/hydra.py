@@ -100,13 +100,7 @@ class hydra_api:
             json=payload,
             verify=self.ca_certificate_path,
         )
-        if r.status_code != 200:
-            raise Exception(
-                """Putting information to '{}' failed.\n
-                    Error Code: {}""".format(
-                    endpoint, r.status_code
-                )
-            )
+        if r.status_code != 200:requests.packages.urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='access.redhat.com', port=443): Max retries exceeded with url: /hydra/rest/users/sso/rhn-support-jdeenada?fields=outOfOffice (Caused by NewConnectionError('<requests.packages.urllib3.connection.VerifiedHTTPSConnection object at 0x7f52e55901d0>: Failed to establish a new connection: [Errno -2] Name or service not known',))
 
     def __post_api(self, endpoint, parameters=None, payload=None):
         authentication = (self.username, self.password)
