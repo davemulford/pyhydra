@@ -62,7 +62,7 @@ class hydra_api:
                 verify=self.ca_certificate_path,
             )
             if r.status_code == 204:
-                response = []
+                return []
             if r.status_code != 200:
                 raise Exception(
                     """looking up infomation from: {}\n
@@ -71,7 +71,7 @@ class hydra_api:
                     )
                 )
             try:
-                response = r.json()
+                return r.json()
             except:
                 raise Exception(
                     """looking up information from: {}\n
