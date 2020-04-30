@@ -80,7 +80,6 @@ class hydra_api:
                     )
                 )
         except Exception:
-
             raise Exception(
                 """looking up information from: {}\n
                 Error during request call""".format(
@@ -89,6 +88,7 @@ class hydra_api:
             )
 
         return r.json()
+
 
     def __put_api(self, endpoint, parameters=None, payload=None):
         authentication = (self.username, self.password)
