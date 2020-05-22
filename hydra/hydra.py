@@ -491,7 +491,7 @@ class hydra_api:
 
         return self.__get_api("cases/", parameters=query_params)
 
-    def search_cases(self, **params):
+    def search_cases(self, rows=10, start=0, all=False, **params):
 
         query_params = {}
         # Looping back over the incoming kwargs
@@ -516,9 +516,28 @@ class hydra_api:
                         query_params.update({"fq": "{0}:{1}".format(k, v)})
                     else:
                         query_params.update({"q": "{0}:{1}".format(k, v)})
-
-        return self.__get_api(
-            "search/cases/",
-            parameters=query_params,
-            headers={"Content-Type": "application/json"},
-        )
+        # This is the Default behavior, get just the amount requested (default is first 10 results)
+        if not all:
+            query_params.update({"rows": rows, "start": start})
+            return self.__get_api(
+                "search/cases/",
+                parameters=query_params,
+                headers={"Content-Type": "application/json"},
+            )
+        # Otherwise we are going to get ALL of the results starting from start (default is 0) and in increments of rows (default will be upped to 100 unless set otherwise)
+        else:
+            # Check if rows has been set to anything else
+            if rows == 10:
+                # And set it to 100 if it hasn't
+                rows = 100
+            response = {}
+            page = 1
+            while True:
+                query_params.update({"rows": rows, "start": start})
+                tmp = self.__get_api(
+                    "search/cases/",
+                    parameters=query_params,
+                    headers={"Content-Type": "application/json"},
+                )
+                response[page] = tmp
+            return response
