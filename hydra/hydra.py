@@ -2,7 +2,7 @@
 
 import requests, warnings, functools, deprecation
 from concurrent.futures import ThreadPoolExecutor
-
+from threading import Thread
 
 class hydra_api:
     def __init__(
@@ -21,7 +21,8 @@ class hydra_api:
 
         self.ca_certificate_path = ca_path
         if ca_path == False:  # Used to Disable SSL warning (from each api call)
-            requests.packages.urllib3.disable_warnings()
+            #requests.packages.urllib3.disable_warnings()
+            pass
 
         self.thread_pool = ThreadPoolExecutor(4)
 
@@ -491,6 +492,21 @@ class hydra_api:
 
         return self.__get_api("cases/", parameters=query_params)
 
+    def allThread(self, page, rows, start, query_params, response):
+        query_params.update({"rows": rows, "start": start})
+        query = None
+        while query is None:
+            try:
+                query = self.__get_api(
+                    "search/cases/",
+                    parameters=query_params,
+                    headers={"Content-Type": "application/json"},
+                )
+            except:
+                query = None
+        response.update({page:query})
+        print(response.keys())
+
     def search_cases(self, rows=10, start=0, all=False, **params):
 
         query_params = {}
@@ -528,20 +544,92 @@ class hydra_api:
                 parameters=query_params,
                 headers={"Content-Type": "application/json"},
             )
-        # Otherwise we are going to get ALL of the results starting from start (default is 0) and in increments of rows (default will be upped to 100 unless set otherwise)
+        # Otherwise we are going to get ALL of the results starting from start (default is 0) and in increments of a determined size (If rows is manually set, we will respect that)
         else:
-            # Check if rows has been set to anything else
-            if rows == 10:
-                # And set it to 100 if it hasn't
+            #query_params.update({"rows": rows, "start": start})
+            query_params.update({"rows": 1})
+            first = None
+            # Try try try again until we get some sort of valid response
+            while first is  None:
+                try:
+                    first = self.__get_api(
+                        "search/cases/",
+                        parameters=query_params,
+                        headers={"Content-Type": "application/json"},
+                    )
+                except:
+                    first = None
+            # Assuming we get a valid response
+            if first != []:
+                # we need to get information out of that first response
+                size = int(first.get("response").get("numFound"))
+                # now that we know how many results we expect to get, we need to find the most even split, so every call should succeed
+                # we will start by assuming 100 will work
                 rows = 100
-            response = {}
-            page = 1
-            while True:
-                query_params.update({"rows": rows, "start": start})
-                tmp = self.__get_api(
-                    "search/cases/",
-                    parameters=query_params,
-                    headers={"Content-Type": "application/json"},
-                )
-                response[page] = tmp
+                rowsi = rowsd = rows
+                while size%rows != 0:
+                    rowsi += 1
+                    if rowsd > 0:
+                        rowsd -= 1
+                    if size%rowsd == 0:
+                        rows = rowsd
+                        break
+                    elif size%rowsi == 0:
+                        rows = rowsi
+                        break
+                
+                # we now know that size is evenly divisible by rows
+                start = 0
+                global response
+                response = {}
+                print(response)
+                #executor = ThreadPoolExecutor(max_workers=20)
+                for page in range(1, int(size/rows)+1):
+                    tmp = Thread(target=self.allThread, args=(page, rows, start, query_params, response))#, daemon=True)
+                    tmp.start()
+                    #tmp.join()
+                    #executor.submit(self.allThread, page, rows, start, query_params, response)
+                    start += rows
+                print(response)
+                    #query_params.update({"rows": rows, "start": start})
+                    #query = None
+                    #while query is None:
+                    #    try:
+                    #        query = self.__get_api(
+                    #            "search/cases/",
+                    #            parameters=query_params,
+                    #            headers={"Content-Type": "application/json"},
+                    #        )
+                    #    except:
+                    #        query = None
+                    ## and handle the response
+                    #response[page] = query
+                    ## increment start and start the loop over!
+                    #start += rows
+                #while True:
+                #    query_params.update({"rows": rows, "start": start})
+                #    tmp = self.__get_api(
+                #        "search/cases/",
+                #        parameters=query_params,
+                #        headers={"Content-Type": "application/json"},
+                #    )
+                #    # If we get a valid response
+                #    if tmp != []:
+                #        # Store it,
+                #        response[page] = tmp
+                #        # Increment the starting place, but we need to check something here
+                #        end = tmp.get("response").get("numFound")
+                #        if end%rows != 0 and end - rows < start:
+                #            # Lets increase start by the same as normal
+                #            start += rows
+                #            # And then set the rows for next loop to the remaining size so we don't fail out at the VERY end
+                #            rows = end%rows
+                #        else:
+                #            start += rows
+                #        # And increment the page number.
+                #        page += 1
+                #    # Otherwise
+                #    else:
+                #        # Lets quit as we got all our data apparently
+                #        break
             return response
